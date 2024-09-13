@@ -110,6 +110,7 @@ if __name__ == "__main__":
 
     # Use only one camera for now
     cam_names = [1]
+    cam_inds = [cam_name - 1 for cam_name in cam_names]
 
     if seq_name in ["CoreView_313", "CoreView_315"]:
         cam_names = ["Camera ({})".format(cam_name) for cam_name in cam_names]
@@ -122,13 +123,13 @@ if __name__ == "__main__":
     global_orient = []
     body_pose = []
     transl = []
-    vertices_smpl_space = []
+    bounds = []
 
     for cam_idx, cam_name in enumerate(cam_names):
-        intrinsic = np.array(cameras["K"][cam_idx])
-        D = np.array(cameras["D"][cam_idx]).reshape([-1])
-        R = np.array(cameras["R"][cam_idx])
-        T = np.array(cameras["T"][cam_idx]) / 1000.0
+        intrinsic = np.array(cameras["K"][cam_inds[cam_idx]])
+        D = np.array(cameras["D"][cam_inds[cam_idx]]).reshape([-1])
+        R = np.array(cameras["R"][cam_inds[cam_idx]])
+        T = np.array(cameras["T"][cam_inds[cam_idx]]) / 1000.0
         # R is 3x3, T is 3x3, construct 4x4 extrinsic matrix
         extrinsic = np.block([[R, T], [0, 0, 0, 1]])
 
@@ -234,52 +235,26 @@ if __name__ == "__main__":
                 body_pose.append(poses_smpl)
                 transl.append(new_trans)
 
+                # Re-compute SMPL mesh with new translation
+                smpl_outputs = body_model_smpl(
+                    betas=betas_torch,
+                    body_pose=poses_smpl_torch,
+                    global_orient=root_orient_torch,
+                    transl=new_trans_torch,
+                )
+                # Vertices for visualization
+                verts_smpl = smpl_outputs["vertices"][0].detach().cpu().numpy()
+
+                # Compute 2D bounding box mask
+                min_xyz = np.min(verts_smpl, axis=0)
+                max_xyz = np.max(verts_smpl, axis=0)
+                min_xyz -= 0.05
+                max_xyz += 0.05
+
+                bounds.append(np.stack([min_xyz, max_xyz], axis=0))
+
                 # Visualize SMPL mesh
                 if args.visualize:
-                    # Re-compute SMPL mesh with new translation
-                    smpl_outputs = body_model_smpl(
-                        betas=betas_torch,
-                        body_pose=poses_smpl_torch,
-                        global_orient=root_orient_torch,
-                        transl=new_trans_torch,
-                    )
-                    # Vertices for visualization
-                    verts_smpl = smpl_outputs["vertices"][0].detach().cpu().numpy()
-
-                    min_xyz = np.min(verts_smpl, axis=0)
-                    max_xyz = np.max(verts_smpl, axis=0)
-                    min_xyz -= 0.05
-                    max_xyz += 0.05
-
-                    bounds = np.stack([min_xyz, max_xyz], axis=0)
-                    bound_mask = get_bound_2d_mask(
-                        bounds, intrinsic, np.concatenate([R, T], axis=-1), 1024, 1024
-                    )
-
-                    cv2.imwrite(
-                        os.path.join(
-                            bound_mask_out_dir, "bound_mask_{:06d}.png".format(idx)
-                        ),
-                        bound_mask,
-                    )
-
-                    # # Also record vertices in SMPL canonical coordinate
-                    # s2w = smpl_outputs.A[:, 0].float()
-                    # w2s = torch.inverse(s2w)
-
-                    # tfs = w2s[:, None] @ smpl_outputs.A.float() @ tfs_inv_t
-
-                    # vertices_s = (
-                    #     smpl_outputs.vertices @ w2s[:, :3, :3].permute(0, 2, 1)
-                    # ) + w2s[:, None, :3, 3]
-                    # vertices_s = vertices_s[0].detach().cpu().numpy()
-                    # vertices_smpl_space.append(vertices_s)
-                    # # Save mesh as .obj
-                    # mesh = trimesh.Trimesh(
-                    #     vertices=vertices_s, faces=body_model_smpl.faces
-                    # )
-                    # mesh.export(os.path.join(mesh_dir, "{:06d}.obj".format(idx)))
-
                     img = cv2.cvtColor(cv2.imread(img_file), cv2.COLOR_BGR2RGB)
                     renderer = Renderer(
                         height=img.shape[0],
@@ -317,6 +292,18 @@ if __name__ == "__main__":
 
                     del renderer
 
+
+            bound_mask = get_bound_2d_mask(
+                bounds[img_idx], intrinsic, np.concatenate([R, T], axis=-1), 1024, 1024
+            )
+
+            cv2.imwrite(
+                os.path.join(
+                    bound_mask_out_dir, "bound_mask_{:06d}.png".format(idx)
+                ),
+                bound_mask,
+            )
+
             shutil.copy(
                 os.path.join(img_file),
                 os.path.join(img_out_dir, "image_{:04d}.jpg".format(idx)),
@@ -339,16 +326,3 @@ if __name__ == "__main__":
         body_pose=np.concatenate(body_pose, axis=0),
         transl=np.concatenate(transl, axis=0),
     )
-
-    # # Iterate over all mesh vertices in vertices_smpl_space, compute aabb of all
-    # # vertices, with padding of 10%, and save as .npy
-    # vertices_smpl_space = np.concatenate(vertices_smpl_space, axis=0)
-    # aabb_min = vertices_smpl_space.min(0)
-    # aabb_max = vertices_smpl_space.max(0)
-    # aabb_center = (aabb_min + aabb_max) / 2.0
-    # aabb_size = aabb_max - aabb_min
-    # aabb_size = aabb_size.max() * 1.2
-    # aabb_min = aabb_center - aabb_size / 2.0
-    # aabb_max = aabb_center + aabb_size / 2.0
-    # aabb = np.concatenate([aabb_min, aabb_max], axis=0)
-    # np.save(os.path.join(out_dir, "aabb.npy"), aabb)

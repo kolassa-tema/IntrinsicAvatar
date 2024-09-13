@@ -1,6 +1,6 @@
 # Dataset Preparation
 ## Prerequisite
-For dataset preparation and preprocessing, we assume you already finished intallation steps in `README.md`. ~~For data preprocessing, you also need to download [this .npy file](https://github.com/zju3dv/EasyMocap/blob/98a229f2ab7647f14ac9693eab00639337274b49/data/smplx/J_regressor_body25.npy) from the [EasyMocap Repository](https://github.com/zju3dv/EasyMocap), and put it under `body_models/misc/`~~ this is not needed for PeopleSnapshot and RANA.
+For dataset preparation and preprocessing, we assume you already finished intallation steps in `README.md`. NOTE: for preprocessing ZJU-MoCap and SyntheticHuman, you also need to download [this .txt file](https://github.com/zju3dv/EasyMocap/blob/98a229f2ab7647f14ac9693eab00639337274b49/data/smplx/J_regressor_body25_smplh.txt) from the [EasyMocap Repository](https://github.com/zju3dv/EasyMocap), and put it under `data/smplh/`.
 
 ## PeopleSnapshot Dataset
 We use the preprocessing script from [InstantAvatar](https://github.com/tijiang13/InstantAvatar):
@@ -69,5 +69,27 @@ load
           └-- poses.npz
 ```
 
-## Synthetic-Human-relit and ZJU-MoCap
+## ZJU-MoCap
+To download the ZJU-MoCap dataset please get access [here](https://github.com/zju3dv/neuralbody/blob/master/INSTALL.md#zju-mocap-dataset).
+
+After you get the dataset, extract the dataset to an arbitrary directory, denoted as ${ZJU_ROOT}. It should have the following structure: 
+```
+${ZJU_ROOT}
+ ├-- CoreView_313
+ ├-- CoreView_315
+ |   ...
+ └-- CoreView_394
+```
+
+To preprocess one sequence (e.g. CoreView_377), run the following
+```
+export PYTHONPATH=${PWD}    # only need to run this line once
+python scripts/preprocess_ZJU-MoCap.py --data-dir ${ZJU_ROOT} --out-dir ${OUTPUT_DIR} --seqname CoreView_377
+```
+where ${OUTPUT_DIR} is the directory where you want to save the preprocessed data. After this, create a symbolic link under `./data` directory by:
+```
+ln -s ${OUTPUT_DIR} data/zju_mocap
+```
+
+## Synthetic-Human-relit
 Coming soon!

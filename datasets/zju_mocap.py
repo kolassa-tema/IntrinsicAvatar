@@ -65,11 +65,7 @@ class ZJUMoCapDataset(torch.utils.data.Dataset):
         with open(os.path.join(root, "cameras.json"), "r") as f:
             cameras = json.load(f)
 
-        # self.all_cam_names = cameras["all_cam_names"]
-        if subject in ["CoreView_313", "CoreView_315"]:
-            cam_names = cameras["all_cam_names"]
-        else:
-            cam_names = ["Camera_B1"]
+        cam_names = cameras["all_cam_names"]
 
 		# For multi-view dataset, We assume:
 		# 1) image resolutions are the same across all cameras

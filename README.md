@@ -55,6 +55,7 @@ Please follow the steps in [DATASET.md](DATASET.md).
 
 
 ## Training
+### PeopleSnapshot and RANA
 Training and validation use [wandb](https://wandb.ai/site) for logging, which is free to use but requires online register. If you don't want to use it, append `logger.offline=true` to your command.
 
 To train on the `male-3-casual` sequence of PeopleSnapshot, use the following command:
@@ -62,6 +63,12 @@ To train on the `male-3-casual` sequence of PeopleSnapshot, use the following co
 python launch.py dataset=peoplesnapshot/male-3-casual tag=IA-male-3-casual
 ```
 Checkpoints, code snapshot, and visualizations will be saved under the directory `exp/intrinsic-avatar-male-3-casual/male-3-casual@YYYYMMDD-HHMMSS`
+
+### ZJU-MoCap and SyntheticHuman
+Similarly, to train on the `377` sequence of ZJU-MoCap, use the following command:
+```
+python launch.py dataset=zju-mocap/377 sampler=balanced pose_correction.dataset_length=125 pose_correction.enable_pose_correction=true tag=IA-377
+```
 
 
 ## Testing
