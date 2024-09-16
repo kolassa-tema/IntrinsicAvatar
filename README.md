@@ -64,10 +64,14 @@ python launch.py dataset=peoplesnapshot/male-3-casual tag=IA-male-3-casual
 ```
 Checkpoints, code snapshot, and visualizations will be saved under the directory `exp/intrinsic-avatar-male-3-casual/male-3-casual@YYYYMMDD-HHMMSS`
 
-### ZJU-MoCap and SyntheticHuman
+### ZJU-MoCap
 Similarly, to train on the `377` sequence of ZJU-MoCap, use the following command:
 ```
 python launch.py dataset=zju-mocap/377 sampler=balanced pose_correction.dataset_length=125 pose_correction.enable_pose_correction=true tag=IA-377
+```
+This default setting trains on the `377` sequence using 125 frames from a single camera. You can also train on longer sequences with 4 cameras (with 300 frames for each camera) via the following command:
+```
+python launch.py --config-name config_long dataset=zju-mocap/377_4cam_long sampler=balanced pose_correction.dataset_length=300 pose_correction.enable_pose_correction=true tag=IA-377
 ```
 
 
