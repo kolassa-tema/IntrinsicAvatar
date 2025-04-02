@@ -1,0 +1,21 @@
+name: base
+channels:
+  - nvidia
+  - pytorch3d
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pytorch=*=*cuda12.1*
+  - pytorch-cuda=12.1
+  - pytorch3d
+  - pip
+  - pip:
+    - numpy
+    - torch>=1.13
+    - git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
+    - -r requirements.txt
+#   - mediapipe
+#   - opencv-python
+#   - wandb
